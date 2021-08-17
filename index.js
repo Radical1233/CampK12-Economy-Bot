@@ -5,6 +5,8 @@ const currency = "<:CampK12:809296308765458474>"
 app.get("/", (req, res) => {
   res.send("How did you get this link?")
 })
+var coolDownforbeg = new Set();
+var coolDownforbal = new Set();
 app.listen(3000, () => {
   console.log("Lets gooo! Its working!");
 });
@@ -13,6 +15,9 @@ const Database = require("@replit/database")
 const db = new Database()
 client.on("message", async message => {
   if(message.content.toLowerCase().startsWith("$balance")|| message.content.toLowerCase().startsWith("$bal")){
+    if(coolDownforbal.has(message.author.id)){
+      message.reply("You have used this command in the last 15 seconds, please wait before using this command again.");
+    }else{
       let balance = await db.get(`wallet_${message.author.id}`)
       let bank = await db.get(`bank_${message.author.id}`)
       if(balance === null) balance = 0
@@ -23,9 +28,17 @@ client.on("message", async message => {
       .setColor("RANDOM")
       .setThumbnail(message.author.displayAvatarURL({dynamic: true}))
       message.channel.send(MoneyEmbed)
+    }
+    coolDownforbal.add(message.author.id)
+      setTimeout(() => {
+      coolDownforbal.delete(message.author.id)
+    }, 15000)
   }
   if(message.content.toLowerCase().startsWith("$beg")){
-      let random = [0, 100, 10, 20, 30, 40, 50, 0, 2, 6, 70, 10, 23, 183, 123, 150]
+    if(coolDownforbeg.has(message.author.id)){
+      message.reply("you have used this command in the last 15 seconds, please wait before using this command again.")
+    }else{
+      let random = [90, 98, 69, 119, 500, 0,  183, 123, 150, 100, 123, 123, 90,90,90,90,90,90,100,150,123,98.119, 134, 124]
       let random1 = random[Math.floor(Math.random()*random.length)]
       if(random1 === 0){
       message.reply("Oof, no one donated any money, try again next time :D")
@@ -35,6 +48,11 @@ client.on("message", async message => {
         let money = balance + random1
         db.set(`wallet_${message.author.id}`, money).then(() => {});
       }
+    }
+    coolDownforbeg.add(message.author.id) 
+      setTimeout(() => {
+      coolDownforbeg.delete(message.author.id)
+    }, 15000)
   }
   if (message.content.toLowerCase() === "$help") {
     let embed = new Discord.MessageEmbed()
@@ -69,34 +87,35 @@ client.on("message", async message => {
     message.channel.send(embed)
   }
   if (message.content.toLowerCase() === "$buy piggy") {
-    let wallet = db.get(`wallet_${message.author.id}`);
-    let hasPiggy = db.get(`piggy_${message.author.id}`);
-    if (hasPiggy === nil) {
+    let wallet = await db.get(`wallet_${message.author.id}`);
+    let hasPiggy = await db.get(`piggy_${message.author.id}`);
+    if (hasPiggy != "yes") {
       if (wallet < 500) {
         message.reply(`you don't have 500 ${currency}. You can't buy the piggy bank yet.`);
       } else {
         let moneyLeft = wallet - 500;
         db.set(`wallet_${message.author.id}`, moneyLeft).then(() => { });
         db.set(`piggy_${message.author.id}`, "yes").then(() => { });
+        message.reply("you now have a piggy bank!");
       }
     } else {
       message.reply("you already have the piggy bank.")
     }
   }
   if (message.content.toLowerCase() === "$dep") {
-    let wallet = db.get(`wallet_${message.author.id}`);
-    let bank = db.get(`bank_${message.author.id}`);
+    let wallet = await db.get(`wallet_${message.author.id}`);
+    let bank = await db.get(`bank_${message.author.id}`);
     db.set(`bank_${message.author.id}`, wallet).then(() => { });
     db.set(`wallet_${message.author.id}`, 0).then(() => { });
     message.reply(`${wallet} ${currency} has been added your bank!`);
   }
   if (message.content.toLowerCase() === "$dep piggy") {
-    let hasPiggy = db.get(`piggy_${message.author.id}`)
-    let wallet = db.get(`wallet_${message.author.id}`)
-    if (hasPiggy === nil) {
+    let hasPiggy = await db.get(`piggy_${message.author.id}`)
+    let wallet = await db.get(`wallet_${message.author.id}`)
+    if (hasPiggy != "yes") {
       message.reply("you need to buy the piggy bank to use that command!");
     } else {
-      let piggyMoney = db.get(`piggyMoney_${message.author.id}`)
+      let piggyMoney = await db.get(`piggyMoney_${message.author.id}`)
       if (piggyMoney != 1000) {
         if (wallet < 1000) {
           let final1PiggyMoney = piggyMoney + wallet;
@@ -107,10 +126,13 @@ client.on("message", async message => {
             db.set(`wallet_${message.author.id}`, extra).then(() => { });
             wallet = extra;
             message.reply(`You have maxed out your Piggy Bank now! Your wallet now has ${wallet} ${currency}.`);
+          }else if(piggyMoney === 1000){
+            message.reply("your piggy is already maxed!")
           }else {
-            db.set(`piggyMoney_${message.author.id}`, wallet).then(() => { });
+            let moneh = piggyMoney + wallet;
+            db.set(`piggyMoney_${message.author.id}`, moneh).then(() => { });
             db.set(`wallet_${message.author.id}`, 0).then(() => { });
-            message.reply(`Your piggy bank now has ${wallet} ${currency} in it and your wallet now has 0 ${currency}`);
+            message.reply(`Your piggy bank now has ${moneh} ${currency} in it and your wallet now has 0 ${currency}`);
           }
         }else if(wallet === 1000){
           let final1PiggyMoney = piggyMoney + wallet;
@@ -139,15 +161,15 @@ client.on("message", async message => {
     }
   }
   if(message.content.toLowerCase()==="$piggy break"){
-    let hasPiggy = db.get(`piggy_${message.author.id}`);
-    let piggyMoney = db.get(`piggyMoney_${message.author.id}`);
-    if(hasPiggy === nil){
+    let hasPiggy = await db.get(`piggy_${message.author.id}`);
+    let piggyMoney = await db.get(`piggyMoney_${message.author.id}`);
+    if(hasPiggy != "yes"){
       message.reply("you don't have a piggy bank. Get one in the shop.");
     }else{
-      db.set(`piggy_${message.author.id}`, nil).then(() => {});
-      let wallet = db.get(`wallet_${message.author.id}`);
+      db.set(`piggy_${message.author.id}`, "bah").then(() => {});
+      let wallet = await db.get(`wallet_${message.author.id}`);
       let moneh = piggyMoney + wallet;
-      db.set(`piggyMoney_${message.author.id}`, nil).then(() => {});
+      db.set(`piggyMoney_${message.author.id}`, 0).then(() => {});
       db.set(`wallet_${message.author.id}`, moneh).then(() => {});
       message.reply(`you broke your piggy and got ${piggyMoney} into your wallet!`)
     }
@@ -155,6 +177,14 @@ client.on("message", async message => {
   if(message.content === "$reset"){
     db.set(`wallet_${message.author.id}`, 0).then(() => {});
     db.set(`bank_${message.author.id}`, 0).then(() => {});
+  }
+  if(message.content.toLowerCase() === "$with"){
+    var wallet = await db.get(`wallet_${message.author.id}`);
+    var bank = await db.get(`bank_${message.author.id}`);
+    var moneh = wallet + bank;
+    db.set(`wallet_${message.author.id}`, moneh).then(() => {});
+    db.set(`bank_${message.author.id}`, 0).then(() => {});
+    message.reply(`you withdrew ${bank} from your bank account. You now have ${moneh} in your wallet!`);
   }
 })
 
