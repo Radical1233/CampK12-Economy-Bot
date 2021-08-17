@@ -38,7 +38,7 @@ client.on("message", async message => {
     if(coolDownforbeg.has(message.author.id)){
       message.reply("you have used this command in the last 15 seconds, please wait before using this command again.")
     }else{
-      let random = [90, 98, 69, 119, 500, 0,  183, 123, 150, 100, 123, 123, 90,90,90,90,90,90,100,150,123,98.119, 134, 124]
+      let random = [90, 98, 69, 119, 500, 0,  183, 123, 150, 100, 123, 123, 90,90,90,90,90,90,100,150,123,98,119, 134, 124]
       let random1 = random[Math.floor(Math.random()*random.length)]
       if(random1 === 0){
       message.reply("Oof, no one donated any money, try again next time :D")
